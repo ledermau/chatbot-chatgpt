@@ -83,6 +83,7 @@ function chatbot_chatgpt_settings_page_html() {
                 const chatgptDisclaimerSettingInput = document.getElementById('chatgpt_disclaimer_setting');
                 // New options for max tokens and width - Ver 1.4.2
                 const chatgptMaxTokensSettingInput = document.getElementById('chatgpt_max_tokens_setting');
+                const chatgptTemperatureSettingInput = document.getElementById('chatgpt_temperature_setting');
                 const chatgptWidthSettingInput = document.getElementById('chatgpt_width_setting');
 
                 // Update the local storage with the input values, if inputs exist
@@ -92,6 +93,7 @@ function chatbot_chatgpt_settings_page_html() {
                 if(chatgptStartStatusInput) localStorage.setItem('chatGPTChatBotStatus', chatgptStartStatusInput.value);
                 if(chatgptDisclaimerSettingInput) localStorage.setItem('chatgpt_disclaimer_setting', chatgptDisclaimerSettingInput.value);
                 if(chatgptMaxTokensSettingInput) localStorage.setItem('chatgpt_max_tokens_setting', chatgptMaxTokensSettingInput.value);
+                if(chatgptTemperatureSettingInput) localStorage.setItem('chatgpt_temperature_setting', chatgptTemperatureSettingInput.value);
                 if(chatgptWidthSettingInput) localStorage.setItem('chatgpt_width_setting', chatgptWidthSettingInput.value);
             });
         }
@@ -140,7 +142,9 @@ function chatbot_chatgpt_settings_init() {
 
     // API/Model settings tab - Ver 1.3.0
     register_setting('chatbot_chatgpt_api_model', 'chatgpt_api_key');
+    register_setting('chatbot_chatgpt_api_model', 'elasticemail_api_key');
     register_setting('chatbot_chatgpt_api_model', 'chatgpt_model_choice');
+    register_setting('chatbot_chatgpt_api_model', 'chatgpt_temperature_setting');
     // Max Tokens setting options - Ver 1.4.2
     register_setting('chatbot_chatgpt_api_model', 'chatgpt_max_tokens_setting');
 
@@ -163,6 +167,14 @@ function chatbot_chatgpt_settings_init() {
         'chatgpt_model_choice',
         'ChatGPT Model Choice',
         'chatbot_chatgpt_model_choice_callback',
+        'chatbot_chatgpt_api_model',
+        'chatbot_chatgpt_api_model_section'
+    );
+
+    add_settings_field(
+        'chatgpt_temperature_setting',
+        'ChatGPT Model Temperature',
+        'chatbot_chatgpt_temperature_callback',
         'chatbot_chatgpt_api_model',
         'chatbot_chatgpt_api_model_section'
     );
@@ -369,6 +381,15 @@ function chatbot_chatgpt_model_choice_callback($args) {
         <option value="<?php echo esc_attr( 'gpt-4' ); ?>" <?php selected( $model_choice, 'gpt-4' ); ?>><?php echo esc_html( 'gpt-4' ); ?></option>
         <option value="<?php echo esc_attr( 'gpt-3.5-turbo' ); ?>" <?php selected( $model_choice, 'gpt-3.5-turbo' ); ?>><?php echo esc_html( 'gpt-3.5-turbo' ); ?></option>
     </select>
+    <?php
+}
+
+//Model Temperature
+function chatbot_chatgpt_temperature_callback($args) {
+    // Get the saved chatgpt_temperature_setting value or default to 0.5
+    $model_temperature = esc_attr(get_option('chatgpt_temperature_setting', 0.5));
+    ?>
+    <input type="number" id="chatgpt_temperature_setting" name="chatgpt_temperature_setting" step=0.01 value=0.5 min=0.0 max=1.0>
     <?php
 }
 

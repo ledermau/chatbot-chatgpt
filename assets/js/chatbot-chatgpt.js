@@ -36,7 +36,7 @@ jQuery(document).ready(function ($) {
     chatGptOpenButton.show();
 
     var chatbotContainer = $('<div></div>').addClass('chatbot-container');
-    var chatbotCollapseBtn = $('<button></button>').addClass('chatbot-collapse-btn').addClass('dashicons dashicons-format-chat'); // Add a collapse button
+    var chatbotCollapseBtn = $('<button></button>').addClass('chatbot-collapse-btn');//.addClass('dashicons dashicons-format-chat'); // Add a collapse button
     var chatbotCollapsed = $('<div></div>').addClass('chatbot-collapsed'); // Add a collapsed chatbot icon dashicons-format-chat f125
 
     // Support variable greetings based on setting - Ver 1.1.0
@@ -53,6 +53,35 @@ jQuery(document).ready(function ($) {
 
     // Add initial greeting to the chatbot
     conversation.append(chatbotContainer);
+
+
+    const systemPrompt = "You are a chatbot that answers questions about INNOVATION, PRODUCT MANAGMENT or UX development and computer engineering only, refuse to answer other topics and write 'OFF-TOPIC'.\n"
+    + "The third time the user submits an off-topic request please reply with \"Remember, I’m only here to talk about innovation, product management, or UX. And you can use me to message Ken.\""
+    + "If the user enters 'contact ken' you must reply with 'OK, what is your first name? (or type “quit”)'\n"
+    + "Then, if they have a valid reply, proceed to reply to their response with 'What is your last name?'\n"
+    + "Then, proceed again to ask 'Great. What is your email address?'\n"
+    + "Then, if the email address is formatted properly, proceed as before to ask 'Thank you. What message would you like me to share with Ken?'\n"
+    + "If the emails address is not formatted properly, reply with 'I’m sorry, that doesn’t look like a proper email address. Please be sure it’s in the form of name@domain.com'.\n"
+    + "Finally, say 'Cool! I’ve reached out to Ken for you. We can chat about innovation, product management, or UX or you can close this chat.' then add a line break, then the email information in a json dictionary like {firstName: \"John\", lastName: \"Smith\", etc}.\n"
+    + "If at any point the user replies with 'quit' then reply with 'No Problem. We can chat about innovation, product management, or UX or you can close this chat.'"
+    + "Begin chat here:\n"
+
+    // let defaultClient = ElasticEmail.ApiClient.instance;
+ 
+    // let apikey = defaultClient.authentications['apikey'];
+    // apikey.apiKey = "36DB5273EC1381B1E68BBE2CAB1BA77D55616140BBEBCD99811C242B030BAF5C1821ECAF6061912DC4CD65F3EB3F12E4"
+    
+    // let api = new ElasticEmail.EmailsApi()
+    
+    // var callback = function(error, data, response) {
+    //     if (error) {
+    //         console.error(error);
+    //     } else {
+    //         console.log('API called successfully.');
+    //     }
+    // };
+
+
 
     function initializeChatbot() {
         var chatgpt_diagnostics = localStorage.getItem('chatgpt_diagnostics') || 'Off';
@@ -113,41 +142,40 @@ jQuery(document).ready(function ($) {
     chatGptOpenButton.on('click', toggleChatbot);
 
     function appendMessage(message, sender, cssClass) {
-    var messageElement = $('<div></div>').addClass('chat-message');
-    var textElement = $('<span></span>').text(message);
+        var messageElement = $('<div></div>').addClass('chat-message');
+        var textElement = $('<span></span>').text(message);
 
-    // Add initial greetings if first time
-    if (cssClass) {
-        textElement.addClass(cssClass);
-    }
+        // Add initial greetings if first time
+        if (cssClass) {
+            textElement.addClass(cssClass);
+        }
 
-    if (sender === 'user') {
-        messageElement.addClass('user-message');
-        textElement.addClass('user-text');
-    } else if (sender === 'bot') {
-        messageElement.addClass('bot-message');
-        textElement.addClass('bot-text');
-    } else {
-        messageElement.addClass('error-message');
-        textElement.addClass('error-text');
-    }
+        if (sender === 'user') {
+            messageElement.addClass('user-message');
+            textElement.addClass('user-text');
+        } else if (sender === 'bot') {
+            messageElement.addClass('bot-message');
+            textElement.addClass('bot-text');
+        } else {
+            messageElement.addClass('error-message');
+            textElement.addClass('error-text');
+        }
 
-    messageElement.append(textElement);
-    conversation.append(messageElement);
+        messageElement.append(textElement);
+        conversation.append(messageElement);
 
-    // Add space between user input and bot response
-    if (sender === 'user' || sender === 'bot') {
-        var spaceElement = $('<div></div>').addClass('message-space');
-        conversation.append(spaceElement);
-    }
+        // Add space between user input and bot response
+        if (sender === 'user' || sender === 'bot') {
+            var spaceElement = $('<div></div>').addClass('message-space');
+            conversation.append(spaceElement);
+        }
 
-    // Ver 1.2.4
-    // conversation.scrollTop(conversation[0].scrollHeight);
-    conversation[0].scrollTop = conversation[0].scrollHeight;
+        // Ver 1.2.4
+        // conversation.scrollTop(conversation[0].scrollHeight);
+        conversation[0].scrollTop = conversation[0].scrollHeight;
 
-    // Save the conversation locally between bot sessions - Ver 1.2.0
-    sessionStorage.setItem('chatgpt_conversation', conversation.html());
-
+        // Save the conversation locally between bot sessions - Ver 1.2.0
+        sessionStorage.setItem('chatgpt_conversation', conversation.html());
     }
 
     function showTypingIndicator() {

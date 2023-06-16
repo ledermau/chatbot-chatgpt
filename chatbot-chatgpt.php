@@ -33,13 +33,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once plugin_dir_path(__FILE__) . 'includes/chatbot-chatgpt-settings.php';
 require_once plugin_dir_path(__FILE__) . 'includes/chatbot-chatgpt-shortcode.php';
 
+
 // Diagnostics On or Off - Ver 1.4.2
 update_option('chatgpt_diagnostics', 'Off');
 
 // Enqueue plugin scripts and styles
 function chatbot_chatgpt_enqueue_scripts() {
     // Ensure the Dashicons font is properly enqueued - Ver 1.1.0
-    wp_enqueue_style( 'dashicons' );
+    // wp_enqueue_style( 'dashicons' );
     wp_enqueue_style('chatbot-chatgpt-css', plugins_url('assets/css/chatbot-chatgpt.css', __FILE__));
     wp_enqueue_script('chatbot-chatgpt-js', plugins_url('assets/js/chatbot-chatgpt.js', __FILE__), array('jquery'), '1.0', true);
 
@@ -53,6 +54,7 @@ function chatbot_chatgpt_enqueue_scripts() {
         'chatGPTChatBotStatus' => esc_attr(get_option('chatGPTChatBotStatus')),
         'chatgpt_disclaimer_setting' => esc_attr(get_option('chatgpt_disclaimer_setting')),
         'chatgpt_max_tokens_setting' => esc_attr(get_option('chatgpt_max_tokens_setting')),
+        'chatgpt_temperature_setting' => esc_attr(get_option('chatgpt_temperature_setting')),
         'chatgpt_width_setting' => esc_attr(get_option('chatgpt_width_setting')),
     );
     wp_localize_script('chatbot-chatgpt-local', 'chatbotSettings', $chatbot_settings);
@@ -72,6 +74,8 @@ function chatbot_chatgpt_send_message() {
     $model = esc_attr(get_option('chatgpt_model_choice', 'gpt-3.5-turbo'));
     // Max tokens - Ver 1.4.2
     $max_tokens = esc_attr(get_option('chatgpt_max_tokens_setting', 150));
+    // Temperature - JL
+    $temperature = esc_attr(get_option('chatgpt_temperature_setting', 0.5));
     // Send only clean text via the API
     $message = sanitize_text_field($_POST['message']);
 
@@ -114,13 +118,14 @@ function chatbot_chatgpt_call_api($api_key, $message) {
     // Select the OpenAI Model
     // Get the saved model from the settings or default to "gpt-3.5-turbo"
     $model = esc_attr(get_option('chatgpt_model_choice', 'gpt-3.5-turbo'));
+    $temperature = esc_attr(get_option('chatgpt_temperature_setting', 0.5));
     // Max tokens - Ver 1.4.2
     $max_tokens = intval(esc_attr(get_option('chatgpt_max_tokens_setting', '150')));
 
     $body = array(
         'model' => $model,
         'max_tokens' => $max_tokens,
-        'temperature' => 0.5,
+        'temperature' => $temperature,
 
         'messages' => array(array('role' => 'user', 'content' => $message)),
     );
@@ -150,7 +155,69 @@ function chatbot_chatgpt_call_api($api_key, $message) {
         // Handle any errors that are returned from the chat engine
         return 'Error: Unable to fetch response from ChatGPT API. Please check Settings for a valid API key or your OpenAI account for additional information.';
     }
+    
+    // try {
+    //     if (isset($response_body['choices']) && !empty($response_body['choices'])) {
+    //         // Handle the response from the chat engine
+    //         return $response_body['choices'][0]['message']['content'];
+    //     }
+    // } catch (Exception $e) {
+    //     // return 'Error: Unable to fetch response from ChatGPT API. Please check Settings for a valid API key or your OpenAI account for additional information.';
+    //     return 'Caught exception: ' .  $e->getMessage() . "\n";
+    // }
 }
+
+
+function chatbot_chatgpt_send_elasticemail_api_call() {
+    $args = array(
+        $api_url = 'https://api.elasticemail.com/v2/email/send',
+        $api_key = "36DB5273EC1381B1E68BBE2CAB1BA77D55616140BBEBCD99811C242B030BAF5C1821ECAF6061912DC4CD65F3EB3F12E4",
+        $from = "inno@kenlonyai.com",
+        $fromName = "Inno",
+        $isTransactional = true,
+        // $toEmail = "contactme@kenlonyai.com",
+        $toEmail = "james.lederman@gmail.com",
+        $bodyHtml = "Testing Inno send email api call"
+    );
+
+
+    $args = array(
+        'headers' => $headers,
+        'body' => json_encode($body),
+        'method' => 'POST',
+        'data_format' => 'body',
+        'timeout' => 50, // Increase the timeout values to 15 seconds to wait just a bit longer for a response from the engine
+    );
+
+    $response = wp_remote_post($api_url, $args);
+
+    // $args = array(
+    //     'headers' => $headers,
+    //     'body' => json_encode($body),
+    //     'method' => 'POST',
+    //     'data_format' => 'body',
+    //     'timeout' => 50, // Increase the timeout values to 15 seconds to wait just a bit longer for a response from the engine
+    // );
+
+    $response = wp_remote_post($api_url, $args);
+
+    // Handle any errors that are returned from the chat engine
+    if (is_wp_error($response)) {
+        return 'Error: ' . $response->get_error_message().' Please check Settings for a valid API key or your OpenAI account for additional information.';
+    }
+
+    // Return json_decode(wp_remote_retrieve_body($response), true);
+    $response_body = json_decode(wp_remote_retrieve_body($response), true);
+
+    // if (isset($response_body['choices']) && !empty($response_body['choices'])) {
+    //     // Handle the response from the chat engine
+    //     return $response_body['choices'][0]['message']['content'];
+    // } else {
+    //     // Handle any errors that are returned from the chat engine
+    //     return 'Error: Unable to fetch response from ChatGPT API. Please check Settings for a valid API key or your OpenAI account for additional information.';
+    // }
+}
+
 
 
 function enqueue_greetings_script() {

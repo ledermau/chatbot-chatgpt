@@ -15,17 +15,15 @@ function chatbot_chatgpt_shortcode() {
     ob_start();
     ?>
     <div id="chatbot-chatgpt" style="display: none;">
-        <div id="chatbot-chatgpt-header">
-            <div id="chatgptTitle" class="title"><?php echo $bot_name; ?></div>
-        </div>
+        <div id="chatbot-chatgpt-header"></div>
         <div id="chatbot-chatgpt-conversation"></div>
         <div id="chatbot-chatgpt-input">
             <input type="text" id="chatbot-chatgpt-message" placeholder="<?php echo esc_attr( 'Type your message...' ); ?>">
-            <button id="chatbot-chatgpt-submit">Send</button>
+            <button id="chatbot-chatgpt-submit"></button>
         </div>
     </div>
     <button id="chatgpt-open-btn" style="display: none;">
-    <i class="dashicons dashicons-format-chat"></i>
+    <!-- <i class="dashicons dashicons-format-chat"></i> -->
     </button>
     <?php
     return ob_get_clean();
