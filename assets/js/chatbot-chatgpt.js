@@ -1,7 +1,7 @@
 jQuery(document).ready(function ($) {
 
     // Logging for Diagnostics - Ver 1.4.2
-    var chatgpt_diagnostics = localStorage.getItem('chatgpt_diagnostics') || 'Off';
+    var chatgpt_diagnostics = 'On' //localStorage.getItem('chatgpt_diagnostics') || 'Off';
     localStorage.setItem('chatgpt_diagnostics', chatgpt_diagnostics); // Set if not set
 
     var messageInput = $('#chatbot-chatgpt-message');
@@ -54,42 +54,14 @@ jQuery(document).ready(function ($) {
     // Add initial greeting to the chatbot
     conversation.append(chatbotContainer);
 
-
-    const systemPrompt = "You are a chatbot that answers questions about INNOVATION, PRODUCT MANAGMENT or UX development and computer engineering only, refuse to answer other topics and write 'OFF-TOPIC'.\n"
-    + "The third time the user submits an off-topic request please reply with \"Remember, I’m only here to talk about innovation, product management, or UX. And you can use me to message Ken.\""
-    + "If the user enters 'contact ken' you must reply with 'OK, what is your first name? (or type “quit”)'\n"
-    + "Then, if they have a valid reply, proceed to reply to their response with 'What is your last name?'\n"
-    + "Then, proceed again to ask 'Great. What is your email address?'\n"
-    + "Then, if the email address is formatted properly, proceed as before to ask 'Thank you. What message would you like me to share with Ken?'\n"
-    + "If the emails address is not formatted properly, reply with 'I’m sorry, that doesn’t look like a proper email address. Please be sure it’s in the form of name@domain.com'.\n"
-    + "Finally, say 'Cool! I’ve reached out to Ken for you. We can chat about innovation, product management, or UX or you can close this chat.' then add a line break, then the email information in a json dictionary like {firstName: \"John\", lastName: \"Smith\", etc}.\n"
-    + "If at any point the user replies with 'quit' then reply with 'No Problem. We can chat about innovation, product management, or UX or you can close this chat.'"
-    + "Begin chat here:\n"
-
-    // let defaultClient = ElasticEmail.ApiClient.instance;
- 
-    // let apikey = defaultClient.authentications['apikey'];
-    // apikey.apiKey = "36DB5273EC1381B1E68BBE2CAB1BA77D55616140BBEBCD99811C242B030BAF5C1821ECAF6061912DC4CD65F3EB3F12E4"
-    
-    // let api = new ElasticEmail.EmailsApi()
-    
-    // var callback = function(error, data, response) {
-    //     if (error) {
-    //         console.error(error);
-    //     } else {
-    //         console.log('API called successfully.');
-    //     }
-    // };
-
-
-
     function initializeChatbot() {
         var chatgpt_diagnostics = localStorage.getItem('chatgpt_diagnostics') || 'Off';
         var isFirstTime = !localStorage.getItem('chatgptChatbotOpened');
         var initialGreeting;
         // Remove any legacy conversations that might be store in local storage for increased privacy - Ver 1.4.2
         localStorage.removeItem('chatgpt_conversation');
-  
+        
+        isFirstTime = true;
         if (isFirstTime) {
             initialGreeting = localStorage.getItem('chatgpt_initial_greeting') || 'Hello! How can I help you today?';
 
@@ -103,7 +75,7 @@ jQuery(document).ready(function ($) {
                 return;
             }
 
-            appendMessage(initialGreeting, 'bot', 'initial-greeting');
+            appendMessage(initialGreeting, 'assistant', 'initial-greeting');
             localStorage.setItem('chatgptChatbotOpened', 'true');
             // Save the conversation after the initial greeting is appended - Ver 1.2.0
             sessionStorage.setItem('chatgpt_conversation', conversation.html());
@@ -122,7 +94,7 @@ jQuery(document).ready(function ($) {
                 return;
             }
             
-            appendMessage(initialGreeting, 'bot', 'initial-greeting');
+            appendMessage(initialGreeting, 'assistant', 'initial-greeting');
             localStorage.setItem('chatgptChatbotOpened', 'true');
         }
     }
@@ -153,7 +125,7 @@ jQuery(document).ready(function ($) {
         if (sender === 'user') {
             messageElement.addClass('user-message');
             textElement.addClass('user-text');
-        } else if (sender === 'bot') {
+        } else if (sender === 'assistant') {
             messageElement.addClass('bot-message');
             textElement.addClass('bot-text');
         } else {
@@ -165,10 +137,10 @@ jQuery(document).ready(function ($) {
         conversation.append(messageElement);
 
         // Add space between user input and bot response
-        if (sender === 'user' || sender === 'bot') {
-            var spaceElement = $('<div></div>').addClass('message-space');
-            conversation.append(spaceElement);
-        }
+        // if (sender === 'user' || sender === 'assistant') {
+        //     var spaceElement = $('<div></div>').addClass('message-space');
+        //     conversation.append(spaceElement);
+        // }
 
         // Ver 1.2.4
         // conversation.scrollTop(conversation[0].scrollHeight);
@@ -204,12 +176,15 @@ jQuery(document).ready(function ($) {
         messageInput.val('');
         appendMessage(message, 'user');
 
+        var previousMessages = getPreviousMessages();
+
         $.ajax({
             url: chatbot_chatgpt_params.ajax_url,
             method: 'POST',
             data: {
                 action: 'chatbot_chatgpt_send_message',
                 message: message,
+                chat_messages: JSON.stringify(previousMessages),
             },
             beforeSend: function () {
                 showTypingIndicator();
@@ -228,7 +203,7 @@ jQuery(document).ready(function ($) {
                         botResponse = botResponse.slice(prefix_b.length);
                     }
                                     
-                    appendMessage(botResponse, 'bot');
+                    appendMessage(botResponse, 'assistant');
                 } else {
                     appendMessage('Error: ' + response.data, 'error');
                 }
@@ -259,13 +234,16 @@ jQuery(document).ready(function ($) {
             localStorage.setItem('chatGPTChatBotStatus', 'closed');
             // Clear the conversation when the chatbot is closed - Ver 1.2.0
             // Keep the conversation when the chatbot is closed - Ver 1.2.4
-            // sessionStorage.removeItem('chatgpt_conversation');
+            sessionStorage.removeItem('chatgpt_conversation');
+            sessionStorage.clear();
         } else {
             chatGptChatBot.show();
             chatGptOpenButton.hide();
             localStorage.setItem('chatGPTChatBotStatus', 'open');
             loadConversation();
             scrollToBottom();
+            sessionStorage.clear();
+            
         }
     }
 
@@ -316,6 +294,7 @@ jQuery(document).ready(function ($) {
     // Load conversation from local storage if available - Ver 1.2.0
     function loadConversation() {
         var storedConversation = sessionStorage.getItem('chatgpt_conversation');
+        // var storedChats = sessionStorage.getItem('chatgpt_chats')
         if (storedConversation) {
             conversation.append(storedConversation);
             // Use setTimeout to ensure scrollToBottom is called after the conversation is rendered
@@ -323,6 +302,16 @@ jQuery(document).ready(function ($) {
         } else {
             initializeChatbot();
         }
+    }
+
+    function getPreviousMessages() {
+        var previousMessages = [];
+        $('.chat-message').each(function () {
+            var role = $(this).hasClass('user-message') ? 'user' : 'assistant';
+            var content = $(this).find('.user-text, .bot-text').text();
+            previousMessages.push({ role: role.toString(), content: content });
+        });
+        return previousMessages;
     }
 
     // Call the loadChatbotStatus function here - Ver 1.1.0

@@ -12,6 +12,7 @@ jQuery(document).ready(function ($) {
 
         // Get the input elements
         var chatgptNameInput = document.getElementById('chatgpt_bot_name');
+        var chatgptSystemMessageInput = document.getElementById('chatgpt_system_message');
         var chatgptInitialGreetingInput = document.getElementById('chatgpt_initial_greeting');
         var chatgptSubsequentGreetingInput = document.getElementById('chatgpt_subsequent_greeting');
         var chatgptStartStatusInput = document.getElementById('chatGPTChatBotStatus');
@@ -22,6 +23,12 @@ jQuery(document).ready(function ($) {
         if(chatgptNameInput) {
             chatgptNameInput.addEventListener('change', function() {
                 localStorage.setItem('chatgpt_bot_name', this.value);
+            });
+        }
+
+        if(chatgptSystemMessageInput) {
+            chatgptSystemMessageInput.addEventListener('change', function() {
+                localStorage.setItem('chatgpt_system_message', this.value);
             });
         }
 
@@ -71,6 +78,7 @@ jQuery(document).ready(function ($) {
                 event.preventDefault(); // Prevent form submission
 
                 const chatgptNameInput = document.getElementById('chatgpt_bot_name');
+                const chatgptSystemMessageInput = document.getElementById('chatgpt_system_message');
                 const chatgptInitialGreetingInput = document.getElementById('chatgpt_initial_greeting');
                 const chatgptSubsequentGreetingInput = document.getElementById('chatgpt_subsequent_greeting');
                 const chatgptStartStatusInput = document.getElementById('chatGPTChatBotStatus');
@@ -80,6 +88,10 @@ jQuery(document).ready(function ($) {
 
                 if(chatgptNameInput) {
                     localStorage.setItem('chatgpt_bot_name', chatgptNameInput.value);
+                }
+
+                if(chatgptSystemMessageInput) {
+                    localStorage.setItem('chatgpt_system_message', chatgptSystemMessageInput.value);
                 }
 
                 if(chatgptInitialGreetingInput) {

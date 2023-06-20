@@ -77,6 +77,7 @@ function chatbot_chatgpt_settings_page_html() {
 
                 // Get the input elements by their ids
                 const chatgptNameInput = document.getElementById('chatgpt_bot_name');
+                const chatgptSystemMessageInput = document.getElementById('chatgpt_system_message')
                 const chatgptInitialGreetingInput = document.getElementById('chatgpt_initial_greeting');
                 const chatgptSubsequentGreetingInput = document.getElementById('chatgpt_subsequent_greeting');
                 const chatgptStartStatusInput = document.getElementById('chatGPTChatBotStatus');
@@ -88,6 +89,7 @@ function chatbot_chatgpt_settings_page_html() {
 
                 // Update the local storage with the input values, if inputs exist
                 if(chatgptNameInput) localStorage.setItem('chatgpt_bot_name', chatgptNameInput.value);
+                if(chatgptSystemMessageInput) localStorage.setItem('chatgpt_system_message', chatgptSystemMessageInput.value);
                 if(chatgptInitialGreetingInput) localStorage.setItem('chatgpt_initial_greeting', chatgptInitialGreetingInput.value);
                 if(chatgptSubsequentGreetingInput) localStorage.setItem('chatgpt_subsequent_greeting', chatgptSubsequentGreetingInput.value);
                 if(chatgptStartStatusInput) localStorage.setItem('chatGPTChatBotStatus', chatgptStartStatusInput.value);
@@ -143,6 +145,7 @@ function chatbot_chatgpt_settings_init() {
     // API/Model settings tab - Ver 1.3.0
     register_setting('chatbot_chatgpt_api_model', 'chatgpt_api_key');
     register_setting('chatbot_chatgpt_api_model', 'elasticemail_api_key');
+    register_setting('chatbot_chatgpt_api_model', 'chatgpt_system_message');
     register_setting('chatbot_chatgpt_api_model', 'chatgpt_model_choice');
     register_setting('chatbot_chatgpt_api_model', 'chatgpt_temperature_setting');
     // Max Tokens setting options - Ver 1.4.2
@@ -159,6 +162,22 @@ function chatbot_chatgpt_settings_init() {
         'chatgpt_api_key',
         'ChatGPT API Key',
         'chatbot_chatgpt_api_key_callback',
+        'chatbot_chatgpt_api_model',
+        'chatbot_chatgpt_api_model_section'
+    );
+
+    add_settings_field(
+        'elasticemail_api_key',
+        'Elastic Email API Key',
+        'chatbot_elasticemail_api_key_callback',
+        'chatbot_chatgpt_api_model',
+        'chatbot_chatgpt_api_model_section'
+    );
+
+    add_settings_field(
+        'chatgpt_system_message',
+        'System Message',
+        'chatbot_chatgpt_system_message_callback',
         'chatbot_chatgpt_api_model',
         'chatbot_chatgpt_api_model_section'
     );
@@ -371,6 +390,14 @@ function chatbot_chatgpt_api_key_callback($args) {
     <?php
 }
 
+// Elastic Email Api Key Callback
+function chatbot_elasticemail_api_key_callback($args) {
+    $api_key_ee = esc_attr(get_option('elasticemail_api_key'));
+    ?>
+    <input type="text" id="elasticemail_api_key" name="elasticemail_api_key" value="<?php echo esc_attr( $api_key_ee ); ?>" class="regular-text">
+    <?php
+}
+
 // Model choice
 function chatbot_chatgpt_model_choice_callback($args) {
     // Get the saved chatgpt_model_choice value or default to "gpt-3.5-turbo"
@@ -408,6 +435,13 @@ function chatbot_chatGPTChatBotStatus_callback($args) {
         <option value="open" <?php selected( $start_status, 'open' ); ?>><?php echo esc_html( 'Open' ); ?></option>
         <option value="closed" <?php selected( $start_status, 'closed' ); ?>><?php echo esc_html( 'Closed' ); ?></option>
     </select>
+    <?php
+}
+
+function chatbot_chatgpt_system_message_callback($args) {
+    $system_message = esc_attr(get_option('chatgpt_system_message', 'Hello'));
+    ?>
+    <textarea id="chatgpt_system_message" name="chatgpt_system_message" rows="8" cols="80"><?php echo $system_message; ?></textarea>
     <?php
 }
 
