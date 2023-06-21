@@ -19,9 +19,9 @@
     min-width: 700px;
     height: 600px;
     position: fixed;
-    left: 150px;
-    margin-top: -250px;
-    margin-left: -350px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -55%);
     border: #f33235;
     border-style: solid;
     border-width: 2px;
@@ -121,7 +121,7 @@
 .bot-text {
     display: inline-block;
     /* font-weight: bold; */
-    background-color: #ccc;
+    background-color: #f0f0f0;
     color: #000;
     padding: 5px 10px;
     border-radius: 8px;
@@ -185,7 +185,6 @@
     right: 2%;
     border: none;
     cursor: pointer;
-    padding: 5px;
     float: right;
     box-shadow: 2px 4px 15px rgb(102, 92, 143);
     border-radius: 10%;
@@ -206,15 +205,16 @@
 .typing-indicator {
     display: inline-flex; /* Changed from flex to inline-flex */
     justify-content: flex-start;
-    background-color: #ccc; /* Match the background color for .bot-text*/
+    background-color: #f0f0f0; /* Match the background color for .bot-text*/
     border-radius: 8px; /* Match the border radius */
     padding: 5px 10px; /* Match the padding */
+    margin-left: 10px;
 }
 
 .typing-dot {
     margin-right: 3px;
     animation: typing 1s infinite;
-    color: #ffffff; /* Match the white color of the dots */
+    color: black; /* Match the color of the bot text */
 }
 
 .typing-dot:nth-child(2) {
