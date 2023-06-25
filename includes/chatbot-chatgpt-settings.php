@@ -416,7 +416,7 @@ function chatbot_chatgpt_temperature_callback($args) {
     // Get the saved chatgpt_temperature_setting value or default to 0.5
     $model_temperature = esc_attr(get_option('chatgpt_temperature_setting', 0.5));
     ?>
-    <input type="number" id="chatgpt_temperature_setting" name="chatgpt_temperature_setting" step=0.01 value=0.5 min=0.0 max=1.0>
+    <input type="number" id="chatgpt_temperature_setting" name="chatgpt_temperature_setting" step=0.01 value="<?php echo esc_attr( $model_temperature ); ?>" min=0.0 max=1.0>
     <?php
 }
 

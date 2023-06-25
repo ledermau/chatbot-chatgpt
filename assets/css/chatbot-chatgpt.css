@@ -46,7 +46,7 @@
 }
 
 #chatbot-chatgpt-conversation {
-    display: flex;
+    display: block;
     height: 420px;
     width: 680px;
     flex-grow: 0;
@@ -96,14 +96,15 @@
 .user-message {
     text-align: left;
     display: flex;
-    align-self: flex-end;
+    /* align-self: flex-end; */
+    float: right;
+    /* margin-left: auto; */
 }
 
 .user-text {
     /* display: flex; */
     background: #f33235;
     color: #fff;
-    align-self: flex-end;
     border-radius: 10px;
     font-size: 15px;
     padding: 10px;
@@ -111,11 +112,15 @@
     /* max-width: 80%; */
     margin-left: 140px;
     padding: 5px 10px;
+    float:left;
 }
 
 .bot-message {
+    display: flex;
     text-align: left;
     max-width: 80%;
+    float: left;
+    clear: both;
 }
 
 .bot-text {
@@ -139,25 +144,29 @@
 }
 
 .message-space {
-    height: 0px;
+    display: inline;
+    clear: both;
+    height: 10px;
 }
 
 /* Collapse chatbot upon user request */
 .chatbot-collapse-btn {
     background-image: url('../img/Close_button_NormalState.png');
+    height: 21px;
+    width: 21px;
     background-size: cover;
     background-color: transparent;
     position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    top: 1.5%;
-    right: 1%;
+    /* display: flex; */
+    /* align-items: center;
+    justify-content: center; */
+    top: 10px;
+    right: 10px;
     border: none;
     cursor: pointer;
-    text-align: center;
-    padding: 15px;
-    border-radius: 10%;
+    /* text-align: center; */
+    /* padding: 15px; */
+    /* border-radius: 10%; */
 }
 
 .chatbot-collapse-btn:hover {
@@ -181,12 +190,14 @@
     height: 67px;
     width: 80px;
     position: fixed;
-    bottom: 2%;
-    right: 2%;
+    /* bottom: 2%;
+    right: 2%; */
+    bottom: 40px;
+    right: 40px;
     border: none;
     cursor: pointer;
     float: right;
-    box-shadow: 2px 4px 15px rgb(102, 92, 143);
+    /* box-shadow: 2px 4px 15px rgb(102, 92, 143); */
     border-radius: 10%;
     /* Add z-index - Ver 1.2.1 */
     z-index: 100;
@@ -209,6 +220,8 @@
     border-radius: 8px; /* Match the border radius */
     padding: 5px 10px; /* Match the padding */
     margin-left: 10px;
+    float: left;
+    clear: both;
 }
 
 .typing-dot {
