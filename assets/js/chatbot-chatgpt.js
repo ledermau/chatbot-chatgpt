@@ -1,4 +1,8 @@
 jQuery(document).ready(function ($) {
+    const prefix_a = "As an AI language model, ";
+    const prefix_b = "I am an AI language model and ";
+
+    var offTopicCounter = 0;
 
     // Logging for Diagnostics - Ver 1.4.2
     var chatgpt_diagnostics = 'On' //localStorage.getItem('chatgpt_diagnostics') || 'Off';
@@ -41,6 +45,7 @@ jQuery(document).ready(function ($) {
 
     // initialize contactKenState
     var contactKenState = 0;
+    var validEmailRegex = "\A[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*@↵(?:[A-Z0-9-]+\.)+[A-Z]{2,6}\Z"
 
     // Support variable greetings based on setting - Ver 1.1.0
     var initialGreeting = localStorage.getItem('chatgpt_initial_greeting') || 'Hello! How can I help you today?';
@@ -58,6 +63,7 @@ jQuery(document).ready(function ($) {
     conversation.append(chatbotContainer);
 
     function initializeChatbot() {
+        offTopicCounter = 0;
         var chatgpt_diagnostics = localStorage.getItem('chatgpt_diagnostics') || 'Off';
         var isFirstTime = !localStorage.getItem('chatgptChatbotOpened');
         var initialGreeting;
@@ -118,7 +124,8 @@ jQuery(document).ready(function ($) {
 
     function appendMessage(message, sender, cssClass) {
         var messageElement = $('<div></div>').addClass('chat-message');
-        var textElement = $('<span></span>').text(message);
+        // var textElement = $('<span></span>').text(message);
+        var textElement = $('<p></p>').text(message);
 
         // Add initial greetings if first time
         if (cssClass) {
@@ -140,10 +147,10 @@ jQuery(document).ready(function ($) {
         conversation.append(messageElement);
 
         // Add space between user input and bot response
-        if (sender === 'user' || sender === 'assistant') {
-            var spaceElement = $('<div></div>').addClass('message-space');
-            conversation.append(spaceElement);
-        }
+        // if (sender === 'user' || sender === 'assistant') {
+        //     // var spaceElement = $('<div></div>').addClass('message-space');
+        //     conversation.append(spaceElement);
+        // }
 
         // Ver 1.2.4
         // conversation.scrollTop(conversation[0].scrollHeight);
@@ -182,37 +189,37 @@ jQuery(document).ready(function ($) {
         var previousMessages = getPreviousMessages();
         
         // chatgpt code for email routine
-        if (message.toLowerCase() === 'contact ken') {
+        if (message.toLowerCase().includes('contact ken')) {
             contactKenState = 1;
             appendMessage("OK, what is your first name? (or type “quit”)", 'assistant');
         } else if (message.toLowerCase() === 'quit' && contactKenState !== 0) {
             contactKenState = 0;
-            appendMessage("You have exited the 'contact Ken' routine. How can I assist you further?", 'assistant');
+            appendMessage("No Problem. We can chat about innovation, product management, or UX or you can close this chat.", 'assistant');
         } else if (contactKenState !== 0) {
             switch (contactKenState) {
                 case 1:
-                    // localStorage.setItem('firstName', message);
                     firstName = message;
                     appendMessage("What is your last name?", 'assistant');
                     contactKenState = 2;
                     break;
                 case 2:
-                    // localStorage.setItem('lastName', message);
                     lastName = message;
                     appendMessage("Great! What is your email address?", 'assistant');
                     contactKenState = 3;
                     break;
                 case 3:
-                    // localStorage.setItem('userEmail', message);
                     userEmail = message;
+                    if (!validateEmailFormat(userEmail)) {
+                        appendMessage("I'm sorry, that doesn't look like a proper email address. Please be sure it's in the form of name@domain.com", 'assistant');
+                        contactKenState = 3;
+                        break;
+                    }
                     appendMessage("Thank you. What message would you like me to share with Ken?", 'assistant');
                     contactKenState = 4;
                     break;
                 case 4:
-                    // localStorage.setItem('userMessage', message);
-                    
                     $.ajax({
-                        url: "/wp-json/chatbot-chatgpt/v1/send_contact_email/",
+                        url: "/wp-json/inno/v1/email/",
                         type: "POST",
                         data: {
                             firstName: firstName,
@@ -229,9 +236,6 @@ jQuery(document).ready(function ($) {
                             appendMessage("Sorry, I encountered an error while emailing Ken, please try again or we can chat about innovation, product management, or UX, or you can close this chat.", 'assistant');
                         }
                     });
-
-
-                    
                     contactKenState = 0;
                     break;
             }
@@ -252,8 +256,16 @@ jQuery(document).ready(function ($) {
                     removeTypingIndicator();
                     if (response.success) {
                         let botResponse = response.data;
-                        const prefix_a = "As an AI language model, ";
-                        const prefix_b = "I am an AI language model and ";
+
+                        if (botResponse.includes('OFF-TOPIC')) {
+                            offTopicCounter += 1;
+                            if (offTopicCounter != 0 && offTopicCounter % 3 == 0) {
+                                offTopicCounter = 0;
+                                botResponse = "Remember, I’m only here to talk about innovation, product management, or UX. And you can use me to message Ken.";
+                            } else {
+                                botResponse = "I don't know about that. Ask me about things I know.";
+                            }
+                        }
 
                         if (botResponse.startsWith(prefix_a) && chatgpt_disclaimer_setting === 'No') {
                             botResponse = botResponse.slice(prefix_a.length);
@@ -263,12 +275,13 @@ jQuery(document).ready(function ($) {
                                         
                         appendMessage(botResponse, 'assistant');
                     } else {
-                        appendMessage('Error: ' + response.data, 'error');
+                        // appendMessage('Error: ' + response.data, 'assistant');  // for debugging
+                        appendMessage('I’m sorry, I’m having some indigestion at the moment (technical issues). Please ask me again in a few minutes.', 'assistant');
                     }
                 },
                 error: function () {
                     removeTypingIndicator();
-                    appendMessage('Error: Unable to send message', 'error');
+                    appendMessage('I’m sorry, I’m having some indigestion at the moment (technical issues). Please ask me again in a few minutes.', 'assistant');
                 },
                 complete: function () {
                     removeTypingIndicator();
@@ -277,75 +290,11 @@ jQuery(document).ready(function ($) {
             });
         }
     });
-
-    function sendContactEmail() {
-        var apiUrlEE = 'https://api.elasticemail.com/v2/email/send?';
-        // var apiKeyEE = "B80B27BCF3A88AA9DA98EB5A4B87DFA0C46C6C53671B329A2A1E182B1AAE583F47DF6DE0F53A2726132A50D0AB37ABAA";
-        apiKeyEE = localStorage.getItem('elasticemail_api_key');
-        // var from = "inno@kenlonyai.com";
-        var from = "ledermau@gmail.com";
-        // var fromName = "Inno";
-        var isTransactional = true;
-        var to = "contactme@kenlonyai.com";
-        // var to = "ledermau@gmail.com";
-        // var bodyHtml = "Testing Inno send email API call";
-
-        var firstName = localStorage.getItem('firstName');
-        var lastName = localStorage.getItem('lastName');
-        var userEmail = localStorage.getItem('userEmail');
-        var userMessage = localStorage.getItem('userMessage');
-
-        var subject = "Message from Chatbot, from ".concat(firstName, " ").concat(lastName, " - ").concat(userEmail);
-        var bodyHtml = "\n\t\t\t\tMessage from Chatbot: <br>\n"
-                    + "\t\t\t\tName: ".concat(firstName, " ").concat(lastName, " <br>\n"
-                    + "\t\t\t\tEmail: ").concat(userEmail, " <br>\n"
-                    + "\t\t\t\tMessage: ").concat(userMessage);
     
-        // var headers = {
-        //     'apikey': apiKeyEE
-        // };
-        
-        apiUrlEE += 'apikey=' + encodeURIComponent(apiKeyEE);
-        apiUrlEE += '&isTransactional=' + encodeURIComponent(isTransactional);
-        apiUrlEE += '&subject=' + encodeURIComponent(subject); //. emailDict['firstName'], " ").concat(emailDict['lastName'], " - ").concat(emailDict['email'])
-        apiUrlEE += '&bodyHtml=' + encodeURIComponent(bodyHtml);
-        apiUrlEE += '&from=' + encodeURIComponent(from);
-        apiUrlEE += '&to=' + encodeURIComponent(to);
-    
-        var body = {
-            // 'apikey': "B80B27BCF3A88AA9DA98EB5A4B87DFA0C46C6C53671B329A2A1E182B1AAE583F47DF6DE0F53A2726132A50D0AB37ABAA",
-            // 'from': from,
-            // 'fromName': fromName,
-            // 'isTransactional': isTransactional,
-            // 'to': to,
-            // 'bodyHtml': bodyHtml,
-        };
-    
-        var args = {
-            // 'apikey': apiKeyEE,
-            // 'headers': headers,
-            'body': JSON.stringify(body),
-            'method': 'POST',
-            'data_format': 'body',
-            'timeout': 50, // Increase the timeout values to 15 seconds to wait just a bit longer for a response from the engine
-        };
-    
-        fetch(apiUrlEE, args)
-            .then(function(response) {
-                // Handle any errors that are returned
-                if (!response.ok) {
-                    throw new Error('Error sending elasticemail: ' + response.status);
-                }
-                return response.text();
-            })
-            .then(function(responseBodyStr) {
-                var responseBody = JSON.parse(responseBodyStr);
-                return responseBody;
-            })
-            .catch(function(error) {
-                console.error(error);
-            });
-    }
+    function validateEmailFormat(email) {
+        const regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,6})+$/;
+        return regex.test(email);
+      }
 
     messageInput.on('keydown', function (e) {
         if (e.keyCode === 13) {

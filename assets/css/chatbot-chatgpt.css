@@ -10,7 +10,7 @@
 
 
 /* Set font family to sans-serif for all text within the plugin */
-.chatbot-container * {
+* {
     font-family: sans-serif;
 }
 
@@ -46,18 +46,33 @@
 }
 
 #chatbot-chatgpt-conversation {
-    display: block;
-    height: 420px;
-    width: 680px;
-    flex-grow: 0;
-    padding: 10px;
     display: inline-block;
+    height: 430px;
+    width: 700px;
+    flex-grow: 0;
+    padding: 0px;
     overflow-y: scroll;
 }
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-thumb {
+    background: #888;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
 
 #chatbot-chatgpt-input {
     display: flex;
     padding: 10px;
+    font-family: sans-serif;
+    box-sizing: revert;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 #chatbot-chatgpt-submit {
@@ -67,8 +82,8 @@
     color: #fff;
     border: none;
     border-radius: 8px;
-    padding: 6px 12px;
-    margin-left: 5px;
+    /* padding: 6px 12px; */
+    margin-left: 0px;
     cursor: pointer;
 }
 
@@ -83,34 +98,42 @@
     border: 2px solid #ccc;
     border-radius: 8px;
     padding: 5px 10px;
-    font-size: 16px;
+    font-size: 14px;
+    font-family: sans-serif;
 }
 
 .chat-message {
-    margin: 5px;
-    padding: 5px;
+    margin: 0px;
+    padding: 0px;
     max-width: 100%;
     word-wrap: break-word;
+    font-size: 14px;
 }
 
 .user-message {
     text-align: left;
     display: flex;
     /* align-self: flex-end; */
-    float: right;
-    /* margin-left: auto; */
+    /* float: right; */
+    margin-left: auto;
+    margin-top: 10px;
+    margin-bottom: 0px;
+    margin-right: 16px;
+
 }
 
 .user-text {
-    /* display: flex; */
+    display: block;
     background: #f33235;
     color: #fff;
     border-radius: 10px;
-    font-size: 15px;
-    padding: 10px;
+    font-size: 14px;
     /* width: auto; */
     /* max-width: 80%; */
-    margin-left: 140px;
+    margin-left: auto;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    max-width: 530px;
     padding: 5px 10px;
     float:left;
 }
@@ -119,8 +142,9 @@
     display: flex;
     text-align: left;
     max-width: 80%;
-    float: left;
+    /* float: left; */
     clear: both;
+    margin: 10px 0px 0px 10px;
 }
 
 .bot-text {
@@ -129,6 +153,7 @@
     background-color: #f0f0f0;
     color: #000;
     padding: 5px 10px;
+    margin: 0px;
     border-radius: 8px;
     /* border-bottom-left-radius: 0; */
     overflow-wrap: anywhere;
@@ -144,7 +169,7 @@
 }
 
 .message-space {
-    display: inline;
+    display: block;
     clear: both;
     height: 10px;
 }
@@ -152,8 +177,13 @@
 /* Collapse chatbot upon user request */
 .chatbot-collapse-btn {
     background-image: url('../img/Close_button_NormalState.png');
+    display: block;
     height: 21px;
+    max-height: 21px;
     width: 21px;
+    max-width: 21px;
+    min-height: 21px;
+    min-width: 21px;
     background-size: cover;
     background-color: transparent;
     position: absolute;
@@ -167,6 +197,7 @@
     /* text-align: center; */
     /* padding: 15px; */
     /* border-radius: 10%; */
+    padding: 0px;
 }
 
 .chatbot-collapse-btn:hover {
@@ -201,10 +232,12 @@
     border-radius: 10%;
     /* Add z-index - Ver 1.2.1 */
     z-index: 100;
+    outline: none;
 }
 
 #chatgpt-open-btn:hover {
     background-image: url("../img/RollOver_State-Bot_Launch_Button-80x67.png");
+    outline: none;
 }
 
 #chatgptTitle.title {
@@ -220,7 +253,7 @@
     border-radius: 8px; /* Match the border radius */
     padding: 5px 10px; /* Match the padding */
     margin-left: 10px;
-    float: left;
+    /* float: left; */
     clear: both;
 }
 

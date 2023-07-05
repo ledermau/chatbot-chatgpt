@@ -33,22 +33,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once plugin_dir_path(__FILE__) . 'includes/chatbot-chatgpt-settings.php';
 require_once plugin_dir_path(__FILE__) . 'includes/chatbot-chatgpt-shortcode.php';
 
-add_action('rest_api_init', function () {
-    register_rest_route('chatbot-chatgpt/v1', 'send_contact_email', array(
-        'methods' => 'POST',
-        'callback' => 'send_contact_email',
-    ));
-});
-
 // Diagnostics On or Off - Ver 1.4.2
 update_option('chatgpt_diagnostics', 'On');
-
-add_action('rest_api_init', function () {
-    register_rest_route('chatbot-chatgpt/v1', '/send_contact_email/', array(
-        'methods' => 'POST',
-        'callback' => 'send_contact_email',
-    ));
-});
 
 // Enqueue plugin scripts and styles
 function chatbot_chatgpt_enqueue_scripts() {
@@ -76,9 +62,19 @@ function chatbot_chatgpt_enqueue_scripts() {
     wp_localize_script('chatbot-chatgpt-js', 'chatbot_chatgpt_params', array(
         'ajax_url' => admin_url('admin-ajax.php'),
         'api_key' => esc_attr(get_option('chatgpt_api_key')),
+
     ));
 }
 add_action('wp_enqueue_scripts', 'chatbot_chatgpt_enqueue_scripts');
+
+// register send email endpoint
+add_action('rest_api_init', function () {
+    register_rest_route('inno/v1', '/email/', array(
+        'methods' => 'POST',
+        'callback' => 'send_contact_email',
+        'permission_callback' => '__return_true'
+    ));
+});
 
 // Handle Ajax requests
 function chatbot_chatgpt_send_message() {
@@ -117,70 +113,6 @@ add_action('wp_ajax_nopriv_chatbot_chatgpt_send_message', 'chatbot_chatgpt_send_
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'chatbot_chatgpt_plugin_action_links');
 
 // Call the ChatGPT API
-// function chatbot_chatgpt_call_api_ORIGINAL($api_key, $message) {
-//     // Diagnostics = Ver 1.4.2
-//     $chatgpt_diagnostics = esc_attr(get_option('chatgpt_diagnostics', 'Off'));
-
-//     // The current ChatGPT API URL endpoint for gpt-3.5-turbo and gpt-4
-//     $api_url = 'https://api.openai.com/v1/chat/completions';
-
-//     $headers = array(
-//         'Authorization' => 'Bearer ' . $api_key,
-//         'Content-Type' => 'application/json',
-//     );
-
-//     // Select the OpenAI Model
-//     // Get the saved model from the settings or default to "gpt-3.5-turbo"
-//     $model = esc_attr(get_option('chatgpt_model_choice', 'gpt-3.5-turbo'));
-//     $temperature = intval(esc_attr(get_option('chatgpt_temperature_setting', 0.5)));
-//     // Max tokens - Ver 1.4.2
-//     $max_tokens = intval(esc_attr(get_option('chatgpt_max_tokens_setting', '150')));
-
-//     $body = array(
-//         'model' => $model,
-//         'max_tokens' => $max_tokens,
-//         'temperature' => $temperature,
-
-//         # needs chatgpt_system_message + previous messages + new message
-//         'messages' => array(array('role' => 'user', 'content' => $message)),
-//     );
-
-//     $args = array(
-//         'headers' => $headers,
-//         'body' => json_encode($body),
-//         'method' => 'POST',
-//         'data_format' => 'body',
-//         'timeout' => 50, // Increase the timeout values to 15 seconds to wait just a bit longer for a response from the engine
-//     );
-
-//     $response = wp_remote_post($api_url, $args);
-
-//     // Handle any errors that are returned from the chat engine
-//     if (is_wp_error($response)) {
-//         return 'Error: ' . $response->get_error_message().' Please check Settings for a valid API key or your OpenAI account for additional information.';
-//     }
-//     $response_body_str = wp_remote_retrieve_body($response);
-
-//     $response_body = json_decode($response_body_str, true);
-
-//     if (isset($response_body['choices']) && !empty($response_body['choices'])) {
-//         // Handle the response from the chat engine
-//         $response_content = $response_body['choices'][0]['message']['content'];
-//         if (str_contains($response_content, '{')) {
-//             $email_info_dict = extractJSON($response_content);
-//             $response_content = removeJSON($response_content);
-//             send_contact_email($email_info_dict);
-//             return $response_content;
-//         }
-//         return $response_content;
-//     } else {
-//         // Handle any errors that are returned from the chat engine
-//         // return 'Error: Unable to fetch response from ChatGPT API. Please check Settings for a valid API key or your OpenAI account for additional information.';
-//         return 'Error: ' . $response_body_str;
-//     }
-// }
-
-// Call the ChatGPT API
 function chatbot_chatgpt_call_api($api_key, $message) {
     // Diagnostics = Ver 1.4.2
     $chatgpt_diagnostics = esc_attr(get_option('chatgpt_diagnostics', 'Off'));
@@ -196,7 +128,10 @@ function chatbot_chatgpt_call_api($api_key, $message) {
     // Select the OpenAI Model
     // Get the saved model from the settings or default to "gpt-3.5-turbo"
     $model = esc_attr(get_option('chatgpt_model_choice', 'gpt-3.5-turbo'));
+
+    // Model temperature - Ver Inno
     $temperature = intval(esc_attr(get_option('chatgpt_temperature_setting', 0.5)));
+
     // Max tokens - Ver 1.4.2
     $max_tokens = intval(esc_attr(get_option('chatgpt_max_tokens_setting', '150')));
 
@@ -207,11 +142,18 @@ function chatbot_chatgpt_call_api($api_key, $message) {
     $chat_messages = json_decode(stripslashes($_POST['chat_messages']), true);
     if (is_array($chat_messages) && count($chat_messages) > 0) {
         foreach ($chat_messages as $chat_message) {
-            $previous_messages[] = array(
-                // 'role' => 'system' || 'user',
-                'role' => $chat_message['role'],
-                'content' => $chat_message['content'],
-            );
+            if (!str_contains($chat_message, 'OFF-TOPIC')) {
+                echo $chat_message . '<br>';
+                $previous_messages[] = array(
+                    'role' => $chat_message['role'],
+                    'content' => $chat_message['content'],
+                );
+            } else {
+                // remove the last message (the user's off topic request) from $previous_messages
+                // array_pop($previous_messages);
+                // Continue without adding current message (the reply to the off topic request) to $previous_messages
+                continue;
+            }
         }
     }
 
@@ -264,29 +206,6 @@ function chatbot_chatgpt_call_api($api_key, $message) {
     }
 }
 
-
-// function extractJSON($str) {
-//     // Regex pattern to match json format
-//     $pattern = '/\{[^{}]*\}/';
-
-//     // Use preg_match() to find the JSON string in the text
-//     $match = preg_match($pattern, $str, $jsonStr);
-
-//     // If a match was found, attempt to decode it
-//     if ($match) {
-//         $json = json_decode($jsonStr[0], true);
-
-//         // Check if json_decode() succeeded
-//         if(json_last_error() === JSON_ERROR_NONE) {
-//             // If so, return the JSON data
-//             return $json;
-//         }
-//     }
-
-//     // If no valid JSON was found, return null
-//     return null;
-// }
-
 function removeJSON($inputString) {
     //Matches any JSON string starting with a { and ending with a }
     $pattern = '/{.*?}/'; 
@@ -296,41 +215,31 @@ function removeJSON($inputString) {
     return $outputString;
   }
 
-function send_contact_email($firstName, $lastName, $userEmail, $bodyHtml) {
-    $api_url_ee = 'https://api.elasticemail.com/v2/email/send?';
-    $api_key_ee = "B80B27BCF3A88AA9DA98EB5A4B87DFA0C46C6C53671B329A2A1E182B1AAE583F47DF6DE0F53A2726132A50D0AB37ABAA";
-    // $api_key_ee = esc_attr(get_option('elasticemail_api_key'));
+function send_contact_email(WP_REST_Request $request) {
+    $firstName = $request['firstName'];
+    $lastName = $request['lastName'];
+    $userEmail = $request['userEmail'];
+    $bodyHtml = $request['bodyHtml'];
+    
+    // $api_key_ee = "B80B27BCF3A88AA9DA98EB5A4B87DFA0C46C6C53671B329A2A1E182B1AAE583F47DF6DE0F53A2726132A50D0AB37ABAA";
+    $api_key_ee = esc_attr(get_option('elasticemail_api_key'));
+    
     // $from = "inno@kenlonyai.com";
     $from = "ledermau@gmail.com";
-    // $fromName = "Inno";
-    // $isTransactional = true;
-    // $toEmail = "contactme@kenlonyai.com";
-    $to = "contactme@kenlonyai.com";
-    // $bodyHtml = "Testing Inno send email api call";
-
-    // $headers = array(
-    //     'apikey' => $api_key_ee,
-    // );
+    // $from = esc_attr(get_option('contact_email_from_address', "inno@kenlonyai.com"));
     
+    $to = "contactme@kenlonyai.com";
+    // $to = esc_attr(get_option('contact_email_to_address', "contactme@kenlonyai.com"));
+    
+    $api_url_ee = 'https://api.elasticemail.com/v2/email/send?';
     $api_url_ee .= 'apikey='.urlencode($api_key_ee);
     $api_url_ee .= '&subject='.urlencode("Message from Chatbot, from " . $firstName . " " . $lastName . " - " . $userEmail);
     $api_url_ee .= '&bodyHtml='.urlencode($bodyHtml);
     $api_url_ee .= '&from='.urlencode($from);
     $api_url_ee .= '&to='.urlencode($to);
 
-    $body = array(
-        // 'apikey' => "B80B27BCF3A88AA9DA98EB5A4B87DFA0C46C6C53671B329A2A1E182B1AAE583F47DF6DE0F53A2726132A50D0AB37ABAA",
-        // 'from' => $from,
-        // 'fromName' => $fromName,
-        // 'isTransactional' => $isTransactional,
-        // 'to' => $to,
-        // 'bodyHtml' => $bodyHtml,
-    );
-
     $args = array(
-        // 'apikey' => $api_key_ee,
-        // 'headers' => $headers,
-        'body' => json_encode($body),
+        'body' => json_encode(array()),
         'method' => 'POST',
         'data_format' => 'body',
         'timeout' => 50, // Increase the timeout values to 15 seconds to wait just a bit longer for a response from the engine
